@@ -1,0 +1,130 @@
+{{/* Publications Widget */}}
+
+{{/* Initialise */}}
+{{ $ := .root }}
+{{ $st := .page }}
+{{ $page := .page }}
+{{ $items_type := $st.Params.content.page_type | default "publication" }}
+{{ $items_offset := $st.Params.content.offset | default 0 }}
+{{ $items_count := $st.Params.content.count }}
+{{ if eq $items_count 0 }}
+  {{ $items_count = 65535 }}
+{{ else }}
+  {{ $items_count = $items_count | default 5 }}
+{{ end }}
+{{ $items_sort := $st.Params.content.order | default "desc" }}
+
+{{/* Query */}}
+{{ $query := $.Site.Data.publications }}
+{{ $archive_page := site.GetPage "Section" $items_type }}
+
+{{/* Filters */}}
+
+{{/* if $st.Params.content.filters.publication_type }}
+  {{ $query = where $query "publication_types" "eq" $st.Params.content.filters.publication_type }}
+{{ end */}}
+
+{{ $count := len $query }}
+
+{{/* Offset and Limit */}}
+{{/* if gt $items_offset 0 }}
+  {{ $query = first $items_count (after $items_offset $query) }}
+{{ else }}
+  {{ $query = first $items_count $query }}
+{{ end */}}
+
+{{/* Localisation */}}
+{{ $i18n := "" }}
+{{ $i18n = "more_publications" }}
+
+<div class="row">
+	<div class="col-12 col-lg-4 section-heading">
+		<h1>{{ with $st.Title }}{{ . | markdownify | emojify }}{{ end }}</h1>
+		{{ with $st.Params.subtitle }}<p>{{ . | markdownify | emojify }}</p>{{ end }}
+	</div>
+	
+	<div class="col-12 col-lg-8">
+	
+		{{ with $query }}
+			{{ range first 5 . }}
+				{{ $post := . }}
+				
+				<div class="media stream-item">
+					<div class="media-body">
+
+						<h3 class="article-title mb-0 mt-0">
+						  {{ $post.title }}
+						</h3>
+
+						{{ if $post.summary }}
+							<div class="article-style">
+							  {{ $post.summary }}
+							</div>
+						{{ end }}
+
+						<div class="stream-meta article-metadata">
+							<div class="article-metadata">
+
+								<div>
+									{{ $author_list := "" }}
+									{{ with $post.author }}										
+										{{ range $index, $author := . }}
+											{{ $full_name := delimit (slice (index . "given") (index . "family") ) "" }}
+											{{/* $author_list := delimit (slice $author_list $full_name ) "," */}}
+											{{/* replace $full_name "Thomas Ohlson Timoudas" "**Thomas Ohlson Timoudas**" */}}
+											{{ $full_name | markdownify }}
+											{{- if lt (add $index 1) (len $post.author) }}, {{ end }}
+										{{ end }}
+										
+										{{/* $author_list | markdownify */}}
+									{{ end }}
+								</div>
+
+								{{ if $post.year }}
+									<span class="article-date">
+										{{ $post.year }}
+									</span>
+								{{ end }}
+								  
+								<span class="middot-divider"></span>
+								<span class="pub-publication">
+									{{/* if $page.Params.content-title */}}
+									  {{/* $page.Params.publication_short | markdownify */}}
+									{{/* else if $page.Params.publication */}}
+									{{ if $page.Params.publication }}
+									  {{ $page.Params.publication | markdownify }}
+									{{ end }}
+								</span>
+								
+							</div>
+						</div>
+
+						{{ if $post.url }}
+							<a class="btn btn-outline-primary my-1 mr-1 btn-sm" href="{{ $post.url }}" target="_blank" rel="noopener">
+							  {{ i18n "btn_pdf" }}
+							</a>
+						{{ end }}
+
+						{{ if and $post.bibtex $post.id }}
+							<button type="button" class="btn btn-outline-primary my-1 mr-1 btn-sm js-cite-modal"
+									publication-id="{{ $post.id }}">
+							  {{ i18n "btn_cite" }}
+							</button>
+						{{ end }}
+
+					</div>
+				</div>
+			{{ end }}
+		{{ end }}
+
+		{{ if gt $count $items_count }}
+			<div class="see-all">
+				<a href="{{ $archive_page.RelPermalink }}">
+				{{ i18n $i18n | default "See all" }}
+				<i class="fas fa-angle-right"></i>
+				</a>
+			</div>
+		{{ end }}
+
+	</div>
+</div>
